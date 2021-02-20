@@ -1,0 +1,62 @@
+
+// Import the model (burger.js) to use its database functions.
+const burger = require("../models/burger.js");
+const express = require("express");
+const app = express.Router();
+
+app.get("/", function (req, res) {
+  res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+// Create all our routes and set up logic within those routes where required.
+app.get("/burgers", function (req, res) {
+  burger.all(function (data) {
+    res.json({ burgers: data });
+  });
+});
+
+//adds new data in the 'burger_name' and 'devoured columns' of the database
+app.post("/burgers", function (req, res) {
+  burger.insert([
+    "burger_name", "devoured"
+  ], [
+    req.body.burger_name, req.body.devoured
+  ], function (result) {
+
+    res.json(result);
+  });
+});
+
+//updates a burger to status: 'devoured'
+app.put("/burgers/:id", function (req, res) {
+  var condition = "id = " + req.params.id;
+
+  burger.update({
+    devoured: req.body.devoured
+  }, condition, function (result) {
+    if (result.changedRows == 0) {
+      // If no rows were changed, then the ID must not exist, so 404
+      return res.status(404).end();
+    } else {
+      //displays the updated burger requested through req.params.id
+      res.json({ id: req.params.id });
+    }
+  });
+});
+
+//deletes a burger
+app.delete("/burgers/:id", function (req, res) {
+  var condition = "id = " + req.params.id;
+
+  burger.delete(condition, function (result) {
+    if (result.affectedRows == 0) {
+      // If no rows were changed, then the ID must not exist, so 404
+      return res.status(404).end();
+    } else {
+      res.status(200).end();
+    }
+  });
+});
+
+// Export routes for server.js to use.
+module.exports = app;
